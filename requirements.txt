@@ -1,0 +1,6 @@
+google-auth
+google-cloud-storage
+google-cloud-pubsub
+google-cloud-bigquery
+psycopg2-binary
+sqlalchemy
