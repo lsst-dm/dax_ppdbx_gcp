@@ -2,5 +2,6 @@ google-auth
 google-cloud-storage
 google-cloud-pubsub
 google-cloud-bigquery
+google-cloud-secret-manager
 psycopg2-binary
 sqlalchemy
