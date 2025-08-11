@@ -130,6 +130,8 @@ class ReplicaChunkDatabase:
         if engine.dialect.name != "postgresql":
             raise ValueError("Database URL must be for a PostgreSQL database.")
         project_id = require_env("PROJECT_ID")
+        if engine.url.host is None or engine.url.database is None or engine.url.username is None:
+            raise ValueError("Database URL must include host, database name, and username.")
         return cls(
             project_id=project_id if project_id else require_env("PROJECT_ID"),
             db_host=engine.url.host,
@@ -288,7 +290,7 @@ class ReplicaChunkDatabase:
         """
         return [col.name for col in self.table.columns]
 
-    def execute(self, query: str, params: dict[str, Any] | None = None) -> list[tuple]:
+    def execute(self, query: str, params: dict[str, Any] | None = None) -> list[tuple[Any, ...]]:
         """Execute a raw SQL query and return all results.
 
         Parameters
@@ -300,14 +302,16 @@ class ReplicaChunkDatabase:
 
         Returns
         -------
-        list[tuple]
-            Query results as a list of row tuples.
+        list[tuple[Any, ...]]
+            A list of tuples containing the results of the query. Each tuple
+            corresponds to a row in the result set.
         """
         logging.info("Executing query: %s", query)
         try:
             with self.engine.begin() as conn:
                 result: Result = conn.execute(text(query), params or {})
-                return result.fetchall()
+                rows = result.fetchall()
+                return [tuple(r) for r in rows]
         except Exception:
             logging.exception("Query failed: %s", query)
             raise

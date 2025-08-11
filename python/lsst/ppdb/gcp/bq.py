@@ -22,7 +22,8 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from typing import TypeAlias
 
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
@@ -111,7 +112,7 @@ class QueryRunner:
         return self._location
 
     @classmethod
-    def log_job(cls, job: bigquery.job.QueryJob, label: str, level: int = logging.DEBUG) -> None:
+    def log_job(cls, job: AnyBQJob, label: str, level: int = logging.DEBUG) -> None:
         """Log details of a BigQuery job.
 
         Parameters
@@ -176,6 +177,15 @@ class NoPromotableChunksError(Exception):
     pass
 
 
+AnyBQJob: TypeAlias = (
+    bigquery.job.QueryJob
+    | bigquery.job.LoadJob
+    | bigquery.job.CopyJob
+    | bigquery.job.ExtractJob
+    | bigquery.job.UnknownJob
+)
+
+
 class ReplicaChunkPromoter:
     """Class to promote replica chunks in BigQuery.
 
@@ -234,14 +244,14 @@ class ReplicaChunkPromoter:
         return self._table_names
 
     @property
-    def promotable_chunks(self) -> list[tuple[int]]:
+    def promotable_chunks(self) -> Sequence[tuple[int]]:
         """Get the list of promotable chunks.
 
         Returns
         -------
-        list[tuple[int]]
-            The list of promotable chunks, where each chunk is represented as a
-            tuple containing the `apdb_replica_chunk` ID.
+        Sequence[tuple[int]]
+            The sequence of promotable chunks, where each chunk is represented
+            as a tuple containing the replica chunk ID.
         """
         return self._promotable_chunks
 
@@ -284,12 +294,12 @@ class ReplicaChunkPromoter:
         return self._bq_client
 
     @property
-    def phases(self) -> dict[str, callable]:
+    def phases(self) -> dict[str, Callable]:
         """Get the phases of the promotion process.
 
         Returns
         -------
-        dict[str, callable]
+        dict[str, Callable]
             A dictionary mapping phase names to their corresponding methods.
         """
         return self._phases

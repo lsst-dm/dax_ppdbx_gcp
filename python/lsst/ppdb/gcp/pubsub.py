@@ -23,7 +23,7 @@ import json
 import logging
 
 from google.api_core.exceptions import NotFound
-from google.cloud import pubsub_v1
+from google.cloud import pubsub_v1  # type: ignore[attr-defined]
 
 _LOG = logging.getLogger(__name__)
 
