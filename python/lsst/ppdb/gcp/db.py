@@ -75,7 +75,26 @@ class ReplicaChunkDatabase:
 
     @classmethod
     def from_env(cls) -> ReplicaChunkDatabase:
-        """Create an instance using environment variables."""
+        """Create an instance using environment variables.
+
+        Returns
+        -------
+        ReplicaChunkDatabase
+            An instance of `ReplicaChunkDatabase` initialized with values from
+            environment variables.
+
+        Notes
+        -----
+        The environment variables should be set as follows:
+        - ``PROJECT_ID``: Google Cloud project ID.
+        - ``DB_HOST``: Hostname of the database server.
+        - ``DB_NAME``: Name of the database.
+        - ``DB_USER``: Username for database authentication.
+        - ``DB_SCHEMA``: Schema name within the database.
+        - ``DB_PASSWORD_NAME``: (optional) Name of the secret in Google Secret
+          Manager that contains the database password. Defaults to
+          "ppdb-db-password".
+        """
         return cls(
             project_id=require_env("PROJECT_ID"),
             db_host=require_env("DB_HOST"),
@@ -100,6 +119,12 @@ class ReplicaChunkDatabase:
         project_id : str, optional
             The Google Cloud project ID. If not provided, it will be read from
             the environment.
+
+        Returns
+        -------
+        ReplicaChunkDatabase
+            An instance of `ReplicaChunkDatabase` initialized with the provided
+            database URL and schema name.
         """
         engine = create_engine(db_url)
         if engine.dialect.name != "postgresql":
@@ -115,7 +140,21 @@ class ReplicaChunkDatabase:
 
     @property
     def db_password(self) -> str:
-        """Retrieve the database password from Google Secret Manager."""
+        """Retrieve the database password from Google Secret Manager.
+
+        Returns
+        -------
+        str
+            The database password retrieved from the secret manager.
+
+        Notes
+        -----
+        This method accesses the secret named `self._password_name` in Google
+        Secret Manager and returns its value as a string. It raises an
+        exception if the secret cannot be accessed or if the secret is not
+        found. This password should not be printed or logged in order to avoid
+        security risks.
+        """
         client = secretmanager.SecretManagerServiceClient()
         name = f"projects/{self._project_id}/secrets/{self._password_name}/versions/latest"
         response = client.access_secret_version(request={"name": name})
@@ -123,44 +162,96 @@ class ReplicaChunkDatabase:
 
     @property
     def db_user(self) -> str:
-        """Return the database user."""
+        """Return the database user.
+
+        Returns
+        -------
+        str
+            The database user name used for authentication.
+        """
         return self._db_user
 
     @property
     def db_host(self) -> str:
-        """Return the database host."""
+        """Return the database host.
+
+        Returns
+        -------
+        str
+            The hostname of the database server.
+        """
         return self._db_host
 
     @property
     def db_name(self) -> str:
-        """Return the database name."""
+        """Return the database name.
+
+        Returns
+        -------
+        str
+            The name of the database used for tracking replica chunks.
+        """
         return self._db_name
 
     @property
     def db_schema(self) -> str:
-        """Return the database schema."""
+        """Return the database schema.
+
+        Returns
+        -------
+        str
+            The schema name within the database containing the
+            ``PpdbReplicaChunk`` table.
+        """
         return self._db_schema
 
     @property
     def project_id(self) -> str:
-        """Return the Google Cloud project ID."""
+        """Return the Google Cloud project ID.
+
+        Returns
+        -------
+        str
+            The Google Cloud project ID associated with this database.
+        """
         return self._project_id
 
     @property
     def db_url(self) -> str:
-        """Return the database URL for SQLAlchemy."""
+        """Return the database URL for SQLAlchemy.
+
+        Returns
+        -------
+        str
+            The database URL in the format::
+                postgresql+psycopg2://user:password@host:port/dbname
+                ?options=-c%20search_path=schema_name
+        """
         return f"postgresql+psycopg2://{self.db_user}:{self.db_password}@{self.db_host}:5432/{self.db_name}"
 
     @property
     def db_url_safe(self) -> str:
         """Return a database URL without the password for logging or safe
         display.
+
+        Returns
+        -------
+        str
+            The database URL with the password omitted, in the format::
+                postgresql+psycopg2://user@host:port/dbname
+                ?options=-c%20search_path=schema_name
         """
         return f"postgresql+psycopg2://{self.db_user}@{self.db_host}:5432/{self.db_name}"
 
     @property
     def engine(self) -> Engine:
-        """Return the SQLAlchemy engine for the database connection."""
+        """Return the SQLAlchemy engine for the database connection.
+
+        Returns
+        -------
+        Engine
+            The SQLAlchemy engine used to connect to the database.
+        """
         if self._engine is None:
             logging.info("Connecting to database at: %s (schema: %s)", self.db_url_safe, self.db_schema)
             self._engine = create_engine(
@@ -174,6 +265,12 @@ class ReplicaChunkDatabase:
     def table(self) -> Table:
         """Return the SQLAlchemy Table object for the PpdbReplicaChunk
         table.
+
+        Returns
+        -------
+        Table
+            The SQLAlchemy Table object representing the
+            ``PpdbReplicaChunk`` table in the database.
         """
         if self._table is None:
             metadata = MetaData()
@@ -182,7 +279,13 @@ class ReplicaChunkDatabase:
 
     @property
     def column_names(self) -> list[str]:
-        """Return the column names of the PpdbReplicaChunk table."""
+        """Return the column names of the PpdbReplicaChunk table.
+
+        Returns
+        -------
+        list[str]
+            A list of column names in the `PpdbReplicaChunk` table.
+        """
         return [col.name for col in self.table.columns]
 
     def execute(self, query: str, params: dict[str, Any] | None = None) -> list[tuple]:
@@ -209,7 +312,7 @@ class ReplicaChunkDatabase:
             logging.exception("Query failed: %s", query)
             raise
 
-    def update(self, chunk_id: int, values: dict[str, Any]) -> None:
+    def update(self, chunk_id: int, values: dict[str, Any]) -> int:
         """Update an existing replica chunk in the database.
 
         Parameters
@@ -218,6 +321,13 @@ class ReplicaChunkDatabase:
             The ID of the replica chunk to update.
         values : dict[str, Any]
             A dictionary of column names and their new values to update.
+
+        Returns
+        -------
+        int
+            The number of rows updated. This should be 1 if the update is
+            successful, or 0 if no rows were updated (e.g., if the chunk ID
+            does not exist or the status is already set to the new value).
         """
         logging.info("Preparing to update replica chunk %d with values: %s", chunk_id, values)
         stmt = update(self.table).where(self.table.c.apdb_replica_chunk == chunk_id).values(values)
@@ -239,8 +349,9 @@ class ReplicaChunkDatabase:
                 chunk_id,
                 new_status,
             )
+        return affected_rows
 
-    def insert(self, chunk_id: int, values: dict[str, Any]) -> None:
+    def insert(self, chunk_id: int, values: dict[str, Any]) -> int:
         """Insert a new replica chunk into the database.
 
         Parameters
@@ -249,6 +360,11 @@ class ReplicaChunkDatabase:
             The ID of the replica chunk to insert.
         values : dict[str, Any]
             A dictionary of column names and their values to insert.
+
+        Returns
+        -------
+        int
+            The number of rows inserted, which should be 1 if successful.
         """
         insert_values = {"apdb_replica_chunk": chunk_id, **values}
         logging.info("Preparing to insert replica chunk %d with values: %s", chunk_id, insert_values)
@@ -274,13 +390,14 @@ class ReplicaChunkDatabase:
                 chunk_id,
                 new_status,
             )
+        return affected_rows
 
     def get_promotable_chunks(self) -> list[tuple[int]]:
         """
         Return the first uninterrupted sequence of staged chunks such that all
         prior chunks are promoted.
 
-        Return
+        Returns
         -------
         list[tuple[int]]
             A list of tuples containing the `apdb_replica_chunk` values of the
@@ -323,6 +440,13 @@ class ReplicaChunkDatabase:
             List of tuples containing the `apdb_replica_chunk` values of the
             promotable chunks. Each tuple should contain a single integer
             value.
+
+        Returns
+        -------
+        int
+            The number of rows updated in the database, which should be equal
+            to the number of promotable chunks provided, if they were all found
+            and updated successfully.
         """
         ids = [int(row[0]) for row in promotable_chunks if row and row[0] is not None]
         if not ids:

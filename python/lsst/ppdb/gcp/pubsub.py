@@ -29,7 +29,15 @@ _LOG = logging.getLogger(__name__)
 
 
 class Publisher:
-    """Publisher class for Google Cloud Pub/Sub."""
+    """Publisher class for Google Cloud Pub/Sub.
+
+    Parameters
+    ----------
+    project_id : str
+        The Google Cloud project ID where the Pub/Sub topic is located.
+    topic_name : str
+        The name of the Pub/Sub topic to which messages will be published.
+    """
 
     def __init__(self, project_id: str, topic_name: str):
         """

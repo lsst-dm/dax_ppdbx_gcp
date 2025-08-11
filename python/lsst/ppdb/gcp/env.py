@@ -29,6 +29,11 @@ def require_env(var: str) -> str:
     ----------
     var : str
         The name of the environment variable to retrieve.
+
+    Returns
+    -------
+    str
+        The value of the environment variable.
     """
     value = os.getenv(var)
     if not value:
