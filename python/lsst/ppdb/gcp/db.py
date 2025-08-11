@@ -28,7 +28,7 @@ import logging
 from typing import Any
 
 from google.cloud import secretmanager
-from sqlalchemy import create_engine, insert, text, update, MetaData, Table
+from sqlalchemy import MetaData, Table, create_engine, insert, text, update
 from sqlalchemy.engine import Engine, Result
 
 from .env import require_env
@@ -270,3 +270,67 @@ class ReplicaChunkDatabase:
                 chunk_id,
                 new_status,
             )
+
+    def get_promotable_chunks(self) -> list[tuple[int]]:
+        """
+        Return the first uninterrupted sequence of staged chunks such that all
+        prior chunks are promoted.
+
+        Return
+        -------
+        list[tuple[int]]
+            A list of tuples containing the `apdb_replica_chunk` values of the
+            promotable chunks.
+        """
+        query = """
+        WITH start AS (
+        SELECT MIN(apdb_replica_chunk) AS s
+        FROM "PpdbReplicaChunk"
+        WHERE status <> 'promoted'
+        ),
+        stop AS (
+        SELECT MIN(p.apdb_replica_chunk) AS e
+        FROM "PpdbReplicaChunk" p
+        JOIN start ON TRUE
+        WHERE start.s IS NOT NULL
+            AND p.apdb_replica_chunk >= start.s
+            AND p.status <> 'staged'
+        )
+        SELECT p.apdb_replica_chunk
+        FROM "PpdbReplicaChunk" p
+        JOIN start ON TRUE
+        LEFT JOIN stop ON TRUE
+        WHERE start.s IS NOT NULL
+        AND p.status = 'staged'
+        AND p.apdb_replica_chunk >= start.s
+        AND (stop.e IS NULL OR p.apdb_replica_chunk < stop.e)
+        ORDER BY p.apdb_replica_chunk;
+        """
+        return self.execute(query)
+
+    def mark_chunks_promoted(self, promotable_chunks: list[tuple[int]]) -> int:
+        """Set status='promoted' for the given chunk IDs. Returns number updated.
+        Uses _db.execute(...) by wrapping UPDATE in a CTE that returns a count.
+
+        Parameters
+        ----------
+        promotable_chunks : list[tuple[int]]
+            List of tuples containing the `apdb_replica_chunk` values of the
+            promotable chunks. Each tuple should contain a single integer value.
+        """
+        ids = [int(row[0]) for row in promotable_chunks if row and row[0] is not None]
+        if not ids:
+            return 0
+
+        sql = """
+        WITH updated AS (
+        UPDATE "PpdbReplicaChunk"
+        SET status = 'promoted'
+        WHERE apdb_replica_chunk = ANY(:ids)
+        AND status <> 'promoted'
+        RETURNING apdb_replica_chunk
+        )
+        SELECT COUNT(*) FROM updated;
+        """
+        rows = self.execute(sql, {"ids": ids})
+        return int(rows[0][0]) if rows else 0
