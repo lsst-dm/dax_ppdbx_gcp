@@ -51,8 +51,8 @@ class ReplicaChunkDatabase:
     db_schema : str
         Schema name within the database.
     password_name : str, optional
-        Name of the secret in Google Secret Manager that contains the database password.
-        Defaults to "ppdb-db-password".
+        Name of the secret in Google Secret Manager that contains the database
+        password. Defaults to "ppdb-db-password".
     """
 
     def __init__(
@@ -93,11 +93,13 @@ class ReplicaChunkDatabase:
         Parameters
         ----------
         db_url : str
-            The database URL in the format `postgresql://user:password@host:port/dbname`.
+            The database URL in the format
+            ``postgresql://user:password@host:port/dbname``.
         schema_name : str
             The schema name to use within the database.
         project_id : str, optional
-            The Google Cloud project ID. If not provided, it will be read from the environment.
+            The Google Cloud project ID. If not provided, it will be read from
+            the environment.
         """
         engine = create_engine(db_url)
         if engine.dialect.name != "postgresql":
@@ -170,7 +172,9 @@ class ReplicaChunkDatabase:
 
     @property
     def table(self) -> Table:
-        """Return the SQLAlchemy Table object for the PpdbReplicaChunk table."""
+        """Return the SQLAlchemy Table object for the PpdbReplicaChunk
+        table.
+        """
         if self._table is None:
             metadata = MetaData()
             self._table = Table("PpdbReplicaChunk", metadata, autoload_with=self.engine)
@@ -309,14 +313,16 @@ class ReplicaChunkDatabase:
         return self.execute(query)
 
     def mark_chunks_promoted(self, promotable_chunks: list[tuple[int]]) -> int:
-        """Set status='promoted' for the given chunk IDs. Returns number updated.
-        Uses _db.execute(...) by wrapping UPDATE in a CTE that returns a count.
+        """Set status='promoted' for the given chunk IDs. Returns number
+        updated. Uses ``_db.execute(...)`` by wrapping UPDATE in a CTE that
+        returns a count.
 
         Parameters
         ----------
         promotable_chunks : list[tuple[int]]
             List of tuples containing the `apdb_replica_chunk` values of the
-            promotable chunks. Each tuple should contain a single integer value.
+            promotable chunks. Each tuple should contain a single integer
+            value.
         """
         ids = [int(row[0]) for row in promotable_chunks if row and row[0] is not None]
         if not ids:

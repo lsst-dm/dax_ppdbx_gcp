@@ -23,6 +23,13 @@ import os
 
 
 def require_env(var: str) -> str:
+    """Get the value of an environment variable, ensuring it is set.
+
+    Parameters
+    ----------
+    var : str
+        The name of the environment variable to retrieve.
+    """
     value = os.getenv(var)
     if not value:
         raise RuntimeError(f"Missing required environment variable: {var}")
