@@ -1,4 +1,4 @@
 build/
-python/lsst/ppdb/gcp/version.py
+python/lsst/dax/ppdbx/gcp/version.py
 *.egg-info/
 __pycache__

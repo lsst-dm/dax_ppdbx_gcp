@@ -31,7 +31,7 @@ def _test_package_imports(package_name: str) -> None:
     Parameters
     ----------
     package_name : str
-        The name of the package to test, e.g., 'lsst.ppdb.gcp'.
+        The name of the package to test, e.g., 'lsst.dax.ppdbx.gcp'.
     """
     try:
         pkg = importlib.import_module(package_name)
@@ -71,7 +71,7 @@ class TestPackageImports(unittest.TestCase):
 
     def test_imports(self):
         """Test importing all modules in the 'lsst.ppdb.gcp' package."""
-        _test_package_imports("lsst.ppdb.gcp")
+        _test_package_imports("lsst.dax.ppdbx.gcp")
 
 
 if __name__ == "__main__":
