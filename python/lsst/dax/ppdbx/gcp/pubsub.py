@@ -25,7 +25,7 @@ import logging
 from google.api_core.exceptions import NotFound
 from google.cloud import pubsub_v1  # type: ignore[attr-defined]
 
-_LOG = logging.getLogger(__name__)
+__all__ = ["Publisher"]
 
 
 class Publisher:
@@ -53,7 +53,7 @@ class Publisher:
         try:
             self.publisher.get_topic(request={"topic": self.topic_path})
         except NotFound:
-            _LOG.error("Pub/Sub topic does not exist: %s", self.topic_path)
+            logging.exception("Pub/Sub topic does not exist: %s", self.topic_path)
             raise
 
     def publish(self, message: dict) -> None:
@@ -68,7 +68,7 @@ class Publisher:
         try:
             future = self.publisher.publish(self.topic_path, json.dumps(message).encode("utf-8"))
             future.result()  # Wait for the publish to complete
-            _LOG.info("Published message to topic %s: %s", self.topic_path, message)
+            logging.info("Published message to topic %s: %s", self.topic_path, message)
         except Exception:
-            _LOG.exception("Failed to publish message to topic %s: %s", self.topic_path, message)
+            logging.exception("Failed to publish message to topic %s: %s", self.topic_path, message)
             raise

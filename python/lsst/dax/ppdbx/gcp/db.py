@@ -33,6 +33,8 @@ from sqlalchemy.engine import Engine, Result
 
 from .env import require_env
 
+__all__ = ["ReplicaChunkDatabase"]
+
 
 class ReplicaChunkDatabase:
     """Class to manage database operations for PPDB replica chunk metadata

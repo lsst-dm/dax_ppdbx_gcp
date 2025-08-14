@@ -21,6 +21,8 @@
 
 import os
 
+__all__ = ["require_env"]
+
 
 def require_env(var: str) -> str:
     """Get the value of an environment variable, ensuring it is set.

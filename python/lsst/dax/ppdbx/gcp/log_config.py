@@ -24,6 +24,8 @@ import os
 
 from google.cloud.logging import Client
 
+__all__ = ["setup_logging"]
+
 
 def setup_logging() -> None:
     """Set up Google Cloud Logging for the application, setting the log level
