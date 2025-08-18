@@ -1,4 +1,4 @@
-# This file is part of ppdb-gcp
+# This file is part of dax_ppdbx_gcp
 #
 # Developed for the LSST Data Management System.
 # This product includes software developed by the LSST Project
