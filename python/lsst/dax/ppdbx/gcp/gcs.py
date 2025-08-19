@@ -24,7 +24,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from google.cloud import storage
+from google.cloud.storage import Client
 
 __all__ = ["DeleteError", "StorageClient", "UploadError"]
 
@@ -71,10 +71,10 @@ class StorageClient:
     """
 
     def __init__(self, bucket_name: str):
-        self.client = storage.Client()
+        self.client = Client()
         self.bucket = self.client.bucket(bucket_name)
 
-    def upload_file(self, blob_name: str, file_path: str):
+    def upload_file(self, blob_name: str, file_path: Path) -> None:
         """Upload a file to the specified blob name in the bucket.
 
         Parameters
@@ -130,7 +130,7 @@ class StorageClient:
         if failures:
             raise ExceptionGroup("One or more uploads failed.", failures)
 
-    def upload_from_string(self, blob_name: str, file_content: str):
+    def upload_from_string(self, blob_name: str, file_content: str) -> None:
         """Upload a string as a blob to the specified bucket.
 
         Parameters
@@ -146,7 +146,7 @@ class StorageClient:
         except Exception as e:
             raise UploadError("<string>", blob_name) from e
 
-    def delete_recursive(self, gcs_prefix: str):
+    def delete_recursive(self, gcs_prefix: str) -> None:
         """Recursively delete all of the objects under a GCS prefix.
 
         Parameters

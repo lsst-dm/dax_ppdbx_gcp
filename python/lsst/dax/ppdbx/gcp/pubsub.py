@@ -23,7 +23,8 @@ import json
 import logging
 
 from google.api_core.exceptions import NotFound
-from google.cloud import pubsub_v1  # type: ignore[attr-defined]
+from google.cloud.pubsub_v1 import PublisherClient
+from google.cloud.pubsub_v1.publisher.futures import Future
 
 __all__ = ["Publisher"]
 
@@ -43,7 +44,7 @@ class Publisher:
         """
         Initialize the Publisher with the project ID and topic name.
         """
-        self.publisher = pubsub_v1.PublisherClient()
+        self.publisher = PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, topic_name)
 
     def validate_topic_exists(self) -> None:
@@ -56,7 +57,7 @@ class Publisher:
             logging.exception("Pub/Sub topic does not exist: %s", self.topic_path)
             raise
 
-    def publish(self, message: dict) -> None:
+    def publish(self, message: dict) -> Future:
         """
         Publish a message to the Pub/Sub topic specified during initialization.
 
@@ -66,9 +67,7 @@ class Publisher:
             The message to be published, which will be converted to JSON.
         """
         try:
-            future = self.publisher.publish(self.topic_path, json.dumps(message).encode("utf-8"))
-            future.result()  # Wait for the publish to complete
-            logging.info("Published message to topic %s: %s", self.topic_path, message)
+            return self.publisher.publish(self.topic_path, json.dumps(message).encode("utf-8"))
         except Exception:
             logging.exception("Failed to publish message to topic %s: %s", self.topic_path, message)
             raise
