@@ -207,7 +207,7 @@ class ReplicaChunkPromoter:
         self._phases = {
             "build_tmp": self._copy_to_promoted_tmp,
             "promote_prod": self._promote_tmp_to_prod,
-            "truncate_staging": self._truncate_staging_tables,
+            "delete_staged_chunks": self._delete_staged_chunks,
             "cleanup": self._cleanup_promoted_tmp,
         }
 
@@ -358,8 +358,7 @@ class ReplicaChunkPromoter:
         ----------
         phase : str
             The name of the promotion phase to execute. This should be one of
-            the keys in the `phases` property, such as "build_tmp",
-            "promote_prod", "truncate_staging", or "cleanup".
+            the keys in the `phases` property.
         """
         if phase not in self.phases:
             raise ValueError(f"Unknown promotion phase: {phase}")
@@ -430,7 +429,7 @@ class ReplicaChunkPromoter:
             self.bq_client.delete_table(tmp_ref, not_found_ok=True)
             logging.debug("Dropped %s (if it existed)", tmp_ref)
 
-    def _truncate_staging_tables(self) -> None:
+    def _delete_staged_chunks(self) -> None:
         """Delete only rows for the promoted replica chunk IDs from each
         staging table.
 
@@ -469,7 +468,7 @@ class ReplicaChunkPromoter:
         """
         try:
             self.promotable_chunks = promotable_chunks
-            for phase in ("build_tmp", "promote_prod", "truncate_staging"):
+            for phase in ("build_tmp", "promote_prod", "delete_staged_chunks"):
                 self._execute_phase(phase)
         finally:
             try:
