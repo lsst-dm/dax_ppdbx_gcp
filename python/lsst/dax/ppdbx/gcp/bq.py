@@ -393,12 +393,12 @@ class ReplicaChunkPromoter:
             # Clone prod table structure and data (zero-copy)
             self.runner.run_job("clone_prod", f"CREATE TABLE `{tmp_ref}` CLONE `{prod_ref}`")
 
-            # Insert staged rows into tmp, excluding replicaChunkId
+            # Insert staged rows into tmp, excluding apdb_replica_chunk column
             sql = f"""
             INSERT INTO `{tmp_ref}`
-            SELECT * EXCEPT(replicaChunkId)
+            SELECT * EXCEPT(apdb_replica_chunk)
             FROM `{stage_ref}`
-            WHERE replicaChunkId IN UNNEST(@ids)
+            WHERE apdb_replica_chunk IN UNNEST(@ids)
             """
             self.runner.run_job("insert_staged_to_tmp", sql, job_config=job_cfg)
 
@@ -450,7 +450,7 @@ class ReplicaChunkPromoter:
 
         for staging_ref in self.table_staging_refs:
             try:
-                sql = f"DELETE FROM `{staging_ref}` WHERE replicaChunkId IN UNNEST(@ids)"
+                sql = f"DELETE FROM `{staging_ref}` WHERE apdb_replica_chunk IN UNNEST(@ids)"
                 self.runner.run_job("delete_staged_chunks", sql, job_config=job_config)
                 logging.debug("Deleted %d chunk(s) from staging table %s", len(ids), staging_ref)
             except NotFound:
