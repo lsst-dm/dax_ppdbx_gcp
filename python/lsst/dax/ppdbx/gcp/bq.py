@@ -38,9 +38,9 @@ class QueryRunner:
 
     Parameters
     ----------
-    project_id : str
+    project_id : `str`
         Google Cloud project ID.
-    dataset_id : str
+    dataset_id : `str`
         BigQuery dataset ID.
     """
 
@@ -57,7 +57,7 @@ class QueryRunner:
 
         Returns
         -------
-        QueryRunner
+        query_runner: `QueryRunner`
             An instance of QueryRunner initialized with project and dataset IDs
             from environment variables.
         """
@@ -67,49 +67,23 @@ class QueryRunner:
 
     @property
     def project_id(self) -> str:
-        """Get the Google Cloud project ID.
-
-        Returns
-        -------
-        str
-            The Google Cloud project ID associated with this QueryRunner
-            instance.
-        """
+        """Google Cloud project ID (`str`, read-only)."""
         return self._project_id
 
     @property
     def dataset(self) -> bigquery.Dataset:
-        """Get the BigQuery dataset reference.
-
-        Returns
-        -------
-        bigquery.Dataset
-            The BigQuery dataset object associated with this QueryRunner
-            instance.
-        """
+        """BigQuery dataset reference (`bigquery.Dataset`, read-only)."""
         return self._dataset
 
     @property
     def dataset_id(self) -> str:
-        """Get the BigQuery dataset ID.
-
-        Returns
-        -------
-        str
-            The BigQuery dataset ID associated with this QueryRunner instance.
-        """
+        """BigQuery dataset ID (`str`, read-only)."""
         return self._dataset_id
 
     @property
     def location(self) -> str:
-        """Get the BigQuery dataset location.
-
-        Returns
-        -------
-        str
-            The location of the BigQuery dataset associated with this
-            QueryRunner instance. This is typically the region where the
-            dataset is hosted.
+        """BigQuery dataset location, typically the region where the dataset
+        is hosted (`str`, read-only).
         """
         return self._location
 
@@ -119,12 +93,12 @@ class QueryRunner:
 
         Parameters
         ----------
-        job : bigquery.job.QueryJob
+        job : `bigquery.job.QueryJob`
             The BigQuery job to log.
-        label : str
+        label : `str`
             A label for the job, typically indicating the type of operation
             (e.g., "insert", "delete", "copy").
-        level : int, optional
+        level : `int`, optional
             The logging level to use for the log message. Defaults to
             `logging.DEBUG`.
         """
@@ -150,19 +124,19 @@ class QueryRunner:
 
         Parameters
         ----------
-        label : str
+        label : `str`
             A label for the job, typically indicating the type of operation
             (e.g., "insert", "delete", "copy").
-        sql : str
+        sql : `str`
             The SQL query to execute.
-        job_config : bigquery.QueryJobConfig, optional
+        job_config : `bigquery.QueryJobConfig`, optional
             Configuration for the job, such as query parameters or write
             dispositions. If not provided, a default configuration will be
             used.
 
         Returns
         -------
-        bigquery.job.QueryJob
+        job: `bigquery.job.QueryJob`
             The BigQuery job object representing the executed query. This can
             be used to check the status of the job, retrieve results, or log
             additional details.
@@ -193,10 +167,10 @@ class ReplicaChunkPromoter:
 
     Parameters
     ----------
-    runner : QueryRunner, optional
+    runner : `QueryRunner`, optional
         An instance of `QueryRunner` to execute queries. If not provided, a new
         instance will be created using environment variables.
-    table_names : list[str], optional
+    table_names : `list`[`str`], optional
         List of table names to promote with standard default.
     """
 
@@ -213,122 +187,63 @@ class ReplicaChunkPromoter:
 
     @property
     def project_id(self) -> str:
-        """Get the Google Cloud project ID.
-
-        Returns
-        -------
-        str
-            The Google Cloud project ID associated with this promoter instance.
-        """
+        """Google Cloud project ID (`str`, read-only)."""
         return self._runner.project_id
 
     @property
     def dataset_id(self) -> str:
-        """Get the BigQuery dataset ID.
-
-        Returns
-        -------
-        str
-            The BigQuery dataset ID associated with this promoter instance.
-        """
+        """BigQuery dataset ID (`str`, read-only)."""
         return self._runner.dataset_id
 
     @property
     def table_names(self) -> list[str]:
-        """Get the list of table names to promote.
-
-        Returns
-        -------
-        list[str]
-            The list of table names that will be promoted. This includes the
-            standard tables: "DiaObject", "DiaSource", and "DiaForcedSource".
-        """
+        """List of table names to promote (`list`[`str`], read-only)."""
         return self._table_names
 
     @property
     def promotable_chunks(self) -> Sequence[tuple[int]]:
-        """Get the list of promotable chunks.
-
-        Returns
-        -------
-        Sequence[tuple[int]]
-            The sequence of promotable chunks, where each chunk is represented
-            as a tuple containing the replica chunk ID.
+        """List of promotable chunks (`Sequence`[`tuple`[`int`]],
+        read-only).
         """
         return self._promotable_chunks
 
     @promotable_chunks.setter
     def promotable_chunks(self, chunks: Sequence[tuple[int]]) -> None:
-        """Set the list of promotable chunks.
-
-        Parameters
-        ----------
-        chunks : Sequence[tuple[int]]
-            Sequence of tuples containing the `apdb_replica_chunk` IDs to be
-            promoted. Each tuple should contain a single integer representing
-            the chunk ID.
-        """
         if not chunks:
             raise NoPromotableChunksError("No promotable chunks provided")
         self._promotable_chunks = chunks
 
     @property
     def runner(self) -> QueryRunner:
-        """Get the QueryRunner instance.
-
-        Returns
-        -------
-        QueryRunner
-            The QueryRunner instance used to execute queries and manage
-            BigQuery operations.
+        """QueryRunner instance for executing BigQuery operations
+        (`QueryRunner`, read-only).
         """
         return self._runner
 
     @property
     def bq_client(self) -> bigquery.Client:
-        """Get the BigQuery client.
-
-        Returns
-        -------
-        bigquery.Client
-            The BigQuery client used to interact with Google Cloud BigQuery.
-        """
+        """BigQuery client (`bigquery.Client`, read-only)."""
         return self._bq_client
 
     @property
     def phases(self) -> dict[str, Callable]:
-        """Get the phases of the promotion process.
-
-        Returns
-        -------
-        dict[str, Callable]
-            A dictionary mapping phase names to their corresponding methods.
+        """Phases of the promotion process as a dictionary mapping phase names
+        to their corresponding class methods (`dict`[`str`, `Callable`],
+        read-only).
         """
         return self._phases
 
     @property
     def table_prod_refs(self) -> list[str]:
-        """Get the production table references.
-
-        Returns
-        -------
-        list[str]
-            The list of fully qualified table names in the format
-            ``project_id.dataset_id.table_name`` for each table to be promoted.
+        """Fully-qualified production table references (`list`[`str`],
+        read-only).
         """
         return [f"{self.project_id}.{self.dataset_id}.{table_name}" for table_name in self.table_names]
 
     @property
     def table_staging_refs(self) -> list[str]:
-        """Get the staging table references.
-
-        Returns
-        -------
-        list[str]
-            The list of staging table references in the format
-            ``project_id.dataset_id._table_name_staging`` for each table to be
-            promoted. The staging tables are prefixed with an underscore to
-            differentiate them from the production tables.
+        """Fully-qualified staging table references (`list`[`str`],
+        read-only).
         """
         return [
             f"{self.project_id}.{self.dataset_id}._{table_name}_staging" for table_name in self.table_names
@@ -336,15 +251,8 @@ class ReplicaChunkPromoter:
 
     @property
     def table_promoted_tmp_refs(self) -> list[str]:
-        """Get the promoted temporary table references.
-
-        Returns
-        -------
-        list[str]
-            The list of temporary table references in the format
-            ``project_id.dataset_id._table_name_promoted_tmp`` for each table
-            to be promoted. These tables are used during the promotion process
-            to hold the staged data before it is copied to production.
+        """Fully-qualified promoted temporary table references (`list`[`str`],
+        read-only).
         """
         return [
             f"{self.project_id}.{self.dataset_id}._{table_name}_promoted_tmp"
@@ -356,7 +264,7 @@ class ReplicaChunkPromoter:
 
         Parameters
         ----------
-        phase : str
+        phase : `str`
             The name of the promotion phase to execute. This should be one of
             the keys in the `phases` property.
         """
@@ -369,11 +277,6 @@ class ReplicaChunkPromoter:
         """
         Build ``_{table_name}_promoted_tmp`` efficiently by cloning prod and
         inserting only staged rows for the given replica chunk IDs.
-
-        Parameters
-        ----------
-        promotable_chunks : list[tuple[int]]
-            List of tuples containing a single ``apdb_replica_chunk`` ID each.
         """
         ids = [int(row[0]) for row in self.promotable_chunks if row and row[0] is not None]
         if not ids:
@@ -432,12 +335,6 @@ class ReplicaChunkPromoter:
     def _delete_staged_chunks(self) -> None:
         """Delete only rows for the promoted replica chunk IDs from each
         staging table.
-
-        Parameters
-        ----------
-        promotable_chunks : list[tuple[int]]
-            List of tuples containing the `apdb_replica_chunk` values of the
-            promotable chunks.
         """
         ids = [int(row[0]) for row in self.promotable_chunks if row and row[0] is not None]
         if not ids:
@@ -461,7 +358,7 @@ class ReplicaChunkPromoter:
 
         Parameters
         ----------
-        promotable_chunks : Sequence[tuple[int]]
+        promotable_chunks : `Sequence`[`tuple`[`int`]]
             Sequence of tuples containing the APDB replica chunk IDs to
             promote. Each tuple should contain a single integer representing
             the chunk ID.

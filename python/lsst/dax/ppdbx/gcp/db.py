@@ -39,17 +39,17 @@ class ReplicaChunkDatabase:
 
     Parameters
     ----------
-    project_id : str
+    project_id : `str`
         Google Cloud project ID.
-    db_host : str
+    db_host : `str`
         Hostname of the database server.
-    db_name : str
+    db_name : `str`
         Name of the database.
-    db_user : str
+    db_user : `str`
         Username for database authentication.
-    db_schema : str
+    db_schema : `str`
         Schema name within the database.
-    password_name : str, optional
+    password_name : `str`, optional
         Name of the secret in Google Secret Manager that contains the database
         password. Defaults to "ppdb-db-password".
     """
@@ -78,7 +78,7 @@ class ReplicaChunkDatabase:
 
         Returns
         -------
-        ReplicaChunkDatabase
+        database : `ReplicaChunkDatabase`
             An instance of `ReplicaChunkDatabase` initialized with values from
             environment variables.
 
@@ -121,7 +121,7 @@ class ReplicaChunkDatabase:
 
         Returns
         -------
-        ReplicaChunkDatabase
+        database : `ReplicaChunkDatabase`
             An instance of `ReplicaChunkDatabase` initialized with the provided
             database URL and schema name.
         """
@@ -141,16 +141,11 @@ class ReplicaChunkDatabase:
 
     @property
     def db_password(self) -> str:
-        """Retrieve the database password from Google Secret Manager.
-
-        Returns
-        -------
-        str
-            The database password retrieved from the secret manager.
+        """Database password from Google Secret Manager (`str`, read-only).
 
         Notes
         -----
-        This method accesses the secret named `self._password_name` in Google
+        This accesses the secret specified by `self._password_name` in Google
         Secret Manager and returns its value as a string. It raises an
         exception if the secret cannot be accessed or if the secret is not
         found. This password should not be printed or logged in order to avoid
@@ -163,95 +158,47 @@ class ReplicaChunkDatabase:
 
     @property
     def db_user(self) -> str:
-        """Return the database user.
-
-        Returns
-        -------
-        str
-            The database user name used for authentication.
-        """
+        """Database user (`str`, read-only)."""
         return self._db_user
 
     @property
     def db_host(self) -> str:
-        """Return the database host.
-
-        Returns
-        -------
-        str
-            The hostname of the database server.
-        """
+        """Database host (`str`, read-only)."""
         return self._db_host
 
     @property
     def db_name(self) -> str:
-        """Return the database name.
-
-        Returns
-        -------
-        str
-            The name of the database used for tracking replica chunks.
-        """
+        """Database name (`str`, read-only)."""
         return self._db_name
 
     @property
     def db_schema(self) -> str:
-        """Return the database schema.
-
-        Returns
-        -------
-        str
-            The schema name within the database containing the
-            ``PpdbReplicaChunk`` table.
-        """
+        """Database schema name (`str`, read-only)."""
         return self._db_schema
 
     @property
     def project_id(self) -> str:
-        """Return the Google Cloud project ID.
-
-        Returns
-        -------
-        str
-            The Google Cloud project ID associated with this database.
-        """
+        """Google Cloud project ID (`str`, read-only)."""
         return self._project_id
 
     @property
     def db_url(self) -> str:
-        """Return the database URL for SQLAlchemy.
-
-        Returns
-        -------
-        str
-            The database URL in the format::
-                postgresql+psycopg2://user:password@host:port/dbname
-                ?options=-c%20search_path=schema_name
+        """Full database URL for SQLAlchemy, including the password (`str`,
+        read-only).
         """
         return f"postgresql+psycopg2://{self.db_user}:{self.db_password}@{self.db_host}:5432/{self.db_name}"
 
     @property
     def db_url_safe(self) -> str:
-        """Return a database URL without the password for logging or safe
-        display.
-
-        Returns
-        -------
-        str
-            The database URL with the password omitted, in the format::
-                postgresql+psycopg2://user@host:port/dbname
-                ?options=-c%20search_path=schema_name
+        """Database URL without the password for logging or safe display
+        (`str`, read-only).
         """
         return f"postgresql+psycopg2://{self.db_user}@{self.db_host}:5432/{self.db_name}"
 
     @property
     def engine(self) -> Engine:
-        """Return the SQLAlchemy engine for the database connection.
-
-        Returns
-        -------
-        Engine
-            The SQLAlchemy engine used to connect to the database.
+        """SQLAlchemy engine for the database connection (`Engine`,
+        read-only).
         """
         if self._engine is None:
             logging.info("Connecting to database at: %s (schema: %s)", self.db_url_safe, self.db_schema)
@@ -264,14 +211,8 @@ class ReplicaChunkDatabase:
 
     @property
     def table(self) -> Table:
-        """Return the SQLAlchemy Table object for the PpdbReplicaChunk
+        """SQLAlchemy `~sqlalchemy.Table` object for the PpdbReplicaChunk
         table.
-
-        Returns
-        -------
-        Table
-            The SQLAlchemy Table object representing the
-            ``PpdbReplicaChunk`` table in the database.
         """
         if self._table is None:
             metadata = MetaData()
@@ -280,12 +221,8 @@ class ReplicaChunkDatabase:
 
     @property
     def column_names(self) -> list[str]:
-        """Return the column names of the PpdbReplicaChunk table.
-
-        Returns
-        -------
-        list[str]
-            A list of column names in the `PpdbReplicaChunk` table.
+        """Column names of the PpdbReplicaChunk table (`list`[`str`],
+        read-only).
         """
         return [col.name for col in self.table.columns]
 
@@ -294,14 +231,14 @@ class ReplicaChunkDatabase:
 
         Parameters
         ----------
-        query : str
+        query : `str`
             The SQL query to execute.
-        params : dict, optional
+        params : `dict`, optional
             Query parameters for parameterized SQL statements.
 
         Returns
         -------
-        list[tuple[Any, ...]]
+        results : `list`[`tuple`[`Any`, ...]]
             A list of tuples containing the results of the query. Each tuple
             corresponds to a row in the result set.
         """
@@ -320,14 +257,14 @@ class ReplicaChunkDatabase:
 
         Parameters
         ----------
-        chunk_id : int
+        chunk_id : `int`
             The ID of the replica chunk to update.
-        values : dict[str, Any]
+        values : `dict`[`str`, `Any`]
             A dictionary of column names and their new values to update.
 
         Returns
         -------
-        int
+        count : `int`
             The number of rows updated. This should be 1 if the update is
             successful, or 0 if no rows were updated (e.g., if the chunk ID
             does not exist or the status is already set to the new value).
@@ -359,14 +296,14 @@ class ReplicaChunkDatabase:
 
         Parameters
         ----------
-        chunk_id : int
+        chunk_id : `int`
             The ID of the replica chunk to insert.
-        values : dict[str, Any]
+        values : `dict`[`str`, `Any`]
             A dictionary of column names and their values to insert.
 
         Returns
         -------
-        int
+        count : `int`
             The number of rows inserted, which should be 1 if successful.
         """
         insert_values = {"apdb_replica_chunk": chunk_id, **values}
@@ -402,7 +339,7 @@ class ReplicaChunkDatabase:
 
         Returns
         -------
-        list[tuple[int]]
+        chunk_ids : `list`[`tuple`[`int`]]
             A list of tuples containing the `apdb_replica_chunk` values of the
             promotable chunks.
         """
@@ -439,8 +376,8 @@ class ReplicaChunkDatabase:
 
         Parameters
         ----------
-        promotable_chunks : list[tuple[int]]
-            List of tuples containing the `apdb_replica_chunk` values of the
+        promotable_chunks : `list`[`tuple`[`int`]]
+            List of tuples containing the ``apdb_replica_chunk`` values of the
             promotable chunks. Each tuple should contain a single integer
             value.
 
@@ -455,9 +392,9 @@ class ReplicaChunkDatabase:
         if not ids:
             return 0
 
-        sql = """
+        sql = f"""
         WITH updated AS (
-        UPDATE "PpdbReplicaChunk"
+        UPDATE {self.table.name}
         SET status = 'promoted'
         WHERE apdb_replica_chunk = ANY(:ids)
         AND status <> 'promoted'

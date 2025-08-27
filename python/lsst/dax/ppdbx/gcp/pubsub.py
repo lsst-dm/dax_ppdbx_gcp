@@ -37,23 +37,19 @@ class Publisher:
 
     Parameters
     ----------
-    project_id : str
+    project_id : `str`
         The Google Cloud project ID where the Pub/Sub topic is located.
-    topic_name : str
+    topic_name : `str`
         The name of the Pub/Sub topic to which messages will be published.
     """
 
     def __init__(self, project_id: str, topic_name: str):
-        """
-        Initialize the Publisher with the project ID and topic name.
-        """
+        """Initialize the Publisher with the project ID and topic name."""
         self.publisher = PublisherClient()
         self.topic_path = self.publisher.topic_path(project_id, topic_name)
 
     def validate_topic_exists(self) -> None:
-        """
-        Validate that the Pub/Sub topic exists.
-        """
+        """Validate that the Pub/Sub topic exists."""
         try:
             self.publisher.get_topic(request={"topic": self.topic_path})
         except NotFound:
@@ -61,12 +57,12 @@ class Publisher:
             raise
 
     def publish(self, message: dict) -> Future:
-        """
-        Publish a message to the Pub/Sub topic specified during initialization.
+        """Publish a message to the Pub/Sub topic specified during
+        initialization.
 
         Parameters
         ----------
-        message : dict
+        message : `dict`
             The message to be published, which will be converted to JSON.
         """
         try:

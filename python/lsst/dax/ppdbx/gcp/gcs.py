@@ -47,7 +47,7 @@ class DeleteError(StorageError):
 
     Parameters
     ----------
-    prefix
+    prefix : `str`
         GCS prefix that was being deleted.
     """
 
@@ -61,7 +61,7 @@ class StorageClient:
 
     Parameters
     ----------
-    bucket_name : str
+    bucket_name : `str`
         The name of the Google Cloud Storage bucket to interact with.
 
     Notes
@@ -79,9 +79,9 @@ class StorageClient:
 
         Parameters
         ----------
-        blob_name : str
+        blob_name : `str`
             The name of the blob in the bucket.
-        file_path : str
+        file_path : `pathlib.Path`
             The local path to the file to upload.
         """
         try:
@@ -95,15 +95,15 @@ class StorageClient:
 
         Parameters
         ----------
-        gcs_names : dict[Path, str]
+        gcs_names : `dict`[`Path`, `str`]
             A dictionary mapping local file paths (as `Path` objects) to their
             corresponding GCS object names (as strings).
 
         Raises
         ------
         ExceptionGroup
-            If any uploads fail, an `ExceptionGroup` is raised containing
-            `UploadError` instances for each failed upload.
+            Raised if any uploads fail, an `ExceptionGroup` is raised
+            containing `UploadError` instances for each failed upload.
         """
         failures: list[UploadError] = []
 
@@ -135,9 +135,9 @@ class StorageClient:
 
         Parameters
         ----------
-        blob_name : str
+        blob_name : `str`
             The name of the blob in the bucket.
-        file_content : str
+        file_content : `str`
             The content to upload as a string.
         """
         try:
@@ -151,7 +151,7 @@ class StorageClient:
 
         Parameters
         ----------
-        blob_name : str
+        gcs_prefix : `str`
             The name of the blob to delete.
         """
         try:

@@ -40,8 +40,10 @@ def get_auth_default() -> tuple[Credentials, str]:
 
     Returns
     -------
-    credentials_and_project_id : tuple[Credentials, str]
-        A tuple containing the Google Cloud credentials and the project ID.
+    credentials : `Credentials`
+        Google Cloud credentials.
+    project_id : `str`
+        Project ID.
     """
     # Check for required environment variable
     if "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
