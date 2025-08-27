@@ -342,6 +342,15 @@ class ReplicaChunkDatabase:
         chunk_ids : `list`[`tuple`[`int`]]
             A list of tuples containing the `apdb_replica_chunk` values of the
             promotable chunks.
+
+        Notes
+        -----
+        This query finds the contiguous sequence of ``staged`` chunks beginning
+        with the earliest chunk that is not yet ``promoted``, and ending just
+        before the first chunk that is not ``staged``. If no such ending
+        exists, all `staged` chunks from that point onward are returned. If no
+        chunks are `staged` after the first non-`promoted` chunk, an empty list
+        is returned.
         """
         query = f"""
         WITH start AS (
