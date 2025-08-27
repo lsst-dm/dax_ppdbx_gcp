@@ -1,7 +1,6 @@
-########
-ppdb-gcp
-########
+#############
+dax_ppdbx_gcp
+#############
 
-``ppdb-gcp`` is a package in the `LSST Science Pipelines <https://pipelines.lsst.io>`_.
-
-.. Add a brief (few sentence) description of what this package provides.
+``dax_ppdbx_gcp`` provides Google Cloud Platform (GCP) utilities for
+Rubin Prompt Product Database (PPDB).
