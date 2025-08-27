@@ -3,7 +3,7 @@
 MAKEFLAGS += --no-print-directory
 
 help:
-	@echo "Available targets for Felis:"
+	@echo "Available targets:"
 	@echo "  build    - Build the package"
 	@echo "  deps     - Install dependencies"
 	@echo "  check    - Run pre-commit checks"
