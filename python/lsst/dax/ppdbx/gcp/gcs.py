@@ -21,12 +21,12 @@
 
 from __future__ import annotations
 
+__all__ = ["DeleteError", "StorageClient", "UploadError"]
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from google.cloud.storage import Client
-
-__all__ = ["DeleteError", "StorageClient", "UploadError"]
 
 
 class StorageError(RuntimeError):

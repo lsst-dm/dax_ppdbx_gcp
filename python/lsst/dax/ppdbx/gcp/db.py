@@ -23,7 +23,6 @@ from __future__ import annotations
 
 __all__ = ["ReplicaChunkDatabase"]
 
-
 import logging
 from typing import Any
 
@@ -32,8 +31,6 @@ from sqlalchemy import MetaData, Table, create_engine, insert, text, update
 from sqlalchemy.engine import Engine, Result
 
 from .env import require_env
-
-__all__ = ["ReplicaChunkDatabase"]
 
 
 class ReplicaChunkDatabase:
@@ -409,22 +406,22 @@ class ReplicaChunkDatabase:
             A list of tuples containing the `apdb_replica_chunk` values of the
             promotable chunks.
         """
-        query = """
+        query = f"""
         WITH start AS (
         SELECT MIN(apdb_replica_chunk) AS s
-        FROM "PpdbReplicaChunk"
+        FROM {self.table.name}
         WHERE status <> 'promoted'
         ),
         stop AS (
         SELECT MIN(p.apdb_replica_chunk) AS e
-        FROM "PpdbReplicaChunk" p
+        FROM {self.table.name} p
         JOIN start ON TRUE
         WHERE start.s IS NOT NULL
             AND p.apdb_replica_chunk >= start.s
             AND p.status <> 'staged'
         )
         SELECT p.apdb_replica_chunk
-        FROM "PpdbReplicaChunk" p
+        FROM {self.table.name} p
         JOIN start ON TRUE
         LEFT JOIN stop ON TRUE
         WHERE start.s IS NOT NULL

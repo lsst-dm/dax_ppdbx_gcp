@@ -21,12 +21,12 @@
 
 from __future__ import annotations
 
+__all__ = ["get_auth_default"]
+
 import os
 
 import google.auth
 from google.auth.credentials import Credentials
-
-__all__ = ["get_auth_default"]
 
 
 def get_auth_default() -> tuple[Credentials, str]:

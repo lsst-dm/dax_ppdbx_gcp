@@ -21,14 +21,15 @@
 
 from __future__ import annotations
 
+__all__ = ["Publisher"]
+
+
 import json
 import logging
 
 from google.api_core.exceptions import NotFound
 from google.cloud.pubsub_v1 import PublisherClient
 from google.cloud.pubsub_v1.publisher.futures import Future
-
-__all__ = ["Publisher"]
 
 
 class Publisher:

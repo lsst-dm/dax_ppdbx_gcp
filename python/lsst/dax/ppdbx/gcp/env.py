@@ -21,9 +21,9 @@
 
 from __future__ import annotations
 
-import os
-
 __all__ = ["require_env"]
+
+import os
 
 
 def require_env(var: str) -> str:

@@ -21,6 +21,8 @@
 
 from __future__ import annotations
 
+__all__ = ["AnyBQJob", "NoPromotableChunksError", "QueryRunner", "ReplicaChunkPromoter"]
+
 import logging
 from collections.abc import Callable, Sequence
 from typing import TypeAlias
@@ -29,8 +31,6 @@ from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 
 from .env import require_env
-
-__all__ = ["AnyBQJob", "NoPromotableChunksError", "QueryRunner", "ReplicaChunkPromoter"]
 
 
 class QueryRunner:
