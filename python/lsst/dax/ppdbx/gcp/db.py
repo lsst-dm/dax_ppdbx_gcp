@@ -49,6 +49,8 @@ class ReplicaChunkDatabase:
         Username for database authentication.
     db_schema : `str`
         Schema name within the database.
+    db_port : `int`, optional
+        Port number for the database connection. Defaults to 5432.
     password_name : `str`, optional
         Name of the secret in Google Secret Manager that contains the database
         password. Defaults to "ppdb-db-password".
@@ -61,6 +63,7 @@ class ReplicaChunkDatabase:
         db_name: str,
         db_user: str,
         db_schema: str,
+        db_port: int = None,
         password_name: str | None = None,
     ):
         self._project_id = project_id
@@ -68,6 +71,8 @@ class ReplicaChunkDatabase:
         self._db_name = db_name
         self._db_user = db_user
         self._db_schema = db_schema
+        if db_port is None:
+            self._db_port = 5432
         self._engine: Engine | None = None
         self._table: Table | None = None
         self._password_name = password_name or "ppdb-db-password"
@@ -93,6 +98,9 @@ class ReplicaChunkDatabase:
         - ``DB_PASSWORD_NAME``: (optional) Name of the secret in Google Secret
           Manager that contains the database password. Defaults to
           "ppdb-db-password".
+
+        Does not currently accept an environment variable for the database
+        port, so the default will be used (5432).
         """
         return cls(
             project_id=require_env("PROJECT_ID"),
@@ -110,12 +118,12 @@ class ReplicaChunkDatabase:
 
         Parameters
         ----------
-        db_url : str
+        db_url : `str`
             The database URL in the format
             ``postgresql://user:password@host:port/dbname``.
-        schema_name : str
+        schema_name : `str`
             The schema name to use within the database.
-        project_id : str, optional
+        project_id : `str`, optional
             The Google Cloud project ID. If not provided, it will be read from
             the environment.
 
@@ -177,6 +185,11 @@ class ReplicaChunkDatabase:
         return self._db_schema
 
     @property
+    def db_port(self) -> int:
+        """Database port number (`int`, read-only)."""
+        return self._db_port
+
+    @property
     def project_id(self) -> str:
         """Google Cloud project ID (`str`, read-only)."""
         return self._project_id
@@ -186,7 +199,7 @@ class ReplicaChunkDatabase:
         """Full database URL for SQLAlchemy, including the password (`str`,
         read-only).
         """
-        return f"postgresql+psycopg2://{self.db_user}:{self.db_password}@{self.db_host}:5432/{self.db_name}"
+        return f"postgresql+psycopg2://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     @property
     def db_url_safe(self) -> str:
