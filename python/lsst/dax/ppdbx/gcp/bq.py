@@ -172,10 +172,17 @@ class ReplicaChunkPromoter:
         instance will be created using environment variables.
     table_names : `list`[`str`], optional
         List of table names to promote with standard default.
+    promotable_chunks: `Sequence`[`tuple`[`int`]]
+        Sequence of tuples containing the APDB replica chunk IDs to promote.
     """
 
-    def __init__(self, runner: QueryRunner | None = None, table_names: list[str] | None = None):
+    def __init__(
+        self, promotable_chunks, runner: QueryRunner | None = None, table_names: list[str] | None = None
+    ):
+        self._promotable_chunks = promotable_chunks
         self._runner = runner or QueryRunner.from_env()
+        # DM-52326: Hard-coded table names; these should be passed in from
+        # config.
         self._table_names = table_names or ["DiaObject", "DiaSource", "DiaForcedSource"]
         self._bq_client = bigquery.Client(project=self._runner.project_id)
         self._phases = {
@@ -353,7 +360,7 @@ class ReplicaChunkPromoter:
             except NotFound:
                 logging.warning("Staging table %s does not exist, skipping delete", staging_ref)
 
-    def promote_chunks(self, promotable_chunks: Sequence[tuple[int]]) -> None:
+    def promote_chunks(self) -> None:
         """Promote APDB replica chunks into production.
 
         Parameters
@@ -364,7 +371,6 @@ class ReplicaChunkPromoter:
             the chunk ID.
         """
         try:
-            self.promotable_chunks = promotable_chunks
             for phase in ("build_tmp", "promote_prod", "delete_staged_chunks"):
                 self._execute_phase(phase)
         finally:
