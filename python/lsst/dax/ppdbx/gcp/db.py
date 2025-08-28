@@ -209,7 +209,7 @@ class ReplicaChunkDatabase:
         """Database URL without the password for logging or safe display
         (`str`, read-only).
         """
-        return f"postgresql+psycopg2://{self.db_user}@{self.db_host}:5432/{self.db_name}"
+        return f"postgresql+psycopg2://{self.db_user}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     @property
     def engine(self) -> Engine:
