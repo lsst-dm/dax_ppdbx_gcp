@@ -172,7 +172,7 @@ class ReplicaChunkPromoter:
         instance will be created using environment variables.
     table_names : `list`[`str`], optional
         List of table names to promote with standard default.
-    promotable_chunks: `Sequence`[`tuple`[`int`]]
+    promotable_chunks: `list`[`int`]
         Sequence of tuples containing the APDB replica chunk IDs to promote.
     """
 
@@ -208,14 +208,14 @@ class ReplicaChunkPromoter:
         return self._table_names
 
     @property
-    def promotable_chunks(self) -> Sequence[tuple[int]]:
-        """List of promotable chunks (`Sequence`[`tuple`[`int`]],
+    def promotable_chunks(self) -> list[int]:
+        """List of promotable chunks (`list[`int`],
         read-only).
         """
         return self._promotable_chunks
 
     @promotable_chunks.setter
-    def promotable_chunks(self, chunks: Sequence[tuple[int]]) -> None:
+    def promotable_chunks(self, chunks: list[int]) -> None:
         if not chunks:
             raise NoPromotableChunksError("No promotable chunks provided")
         self._promotable_chunks = chunks
@@ -285,12 +285,8 @@ class ReplicaChunkPromoter:
         Build ``_{table_name}_promoted_tmp`` efficiently by cloning prod and
         inserting only staged rows for the given replica chunk IDs.
         """
-        ids = [int(row[0]) for row in self.promotable_chunks if row and row[0] is not None]
-        if not ids:
-            raise RuntimeError("List of promotable chunks is empty")
-
         job_cfg = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ArrayQueryParameter("ids", "INT64", ids)]
+            query_parameters=[bigquery.ArrayQueryParameter("ids", "INT64", self.promotable_chunks)]
         )
 
         for prod_ref, tmp_ref, stage_ref in zip(
@@ -343,32 +339,20 @@ class ReplicaChunkPromoter:
         """Delete only rows for the promoted replica chunk IDs from each
         staging table.
         """
-        ids = [int(row[0]) for row in self.promotable_chunks if row and row[0] is not None]
-        if not ids:
-            logging.warning("No IDs to remove from staging; skipping deletes")
-            return
-
         job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ArrayQueryParameter("ids", "INT64", ids)]
+            query_parameters=[bigquery.ArrayQueryParameter("ids", "INT64", self.promotable_chunks)]
         )
 
         for staging_ref in self.table_staging_refs:
             try:
                 sql = f"DELETE FROM `{staging_ref}` WHERE apdb_replica_chunk IN UNNEST(@ids)"
                 self.runner.run_job("delete_staged_chunks", sql, job_config=job_config)
-                logging.debug("Deleted %d chunk(s) from staging table %s", len(ids), staging_ref)
+                logging.debug("Deleted %d chunk(s) from staging table %s", len(self.promotable_chunks), staging_ref)
             except NotFound:
                 logging.warning("Staging table %s does not exist, skipping delete", staging_ref)
 
     def promote_chunks(self) -> None:
         """Promote APDB replica chunks into production.
-
-        Parameters
-        ----------
-        promotable_chunks : `Sequence`[`tuple`[`int`]]
-            Sequence of tuples containing the APDB replica chunk IDs to
-            promote. Each tuple should contain a single integer representing
-            the chunk ID.
         """
         try:
             for phase in ("build_tmp", "promote_prod", "delete_staged_chunks"):

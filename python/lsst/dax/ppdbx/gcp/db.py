@@ -344,14 +344,14 @@ class ReplicaChunkDatabase:
             )
         return affected_rows
 
-    def get_promotable_chunks(self) -> list[tuple[int]]:
+    def get_promotable_chunks(self) -> list[int]:
         """
         Return the first uninterrupted sequence of staged chunks such that all
         prior chunks are promoted.
 
         Returns
         -------
-        chunk_ids : `list`[`tuple`[`int`]]
+        chunk_ids : `list`[`int`]
             A list of tuples containing the `apdb_replica_chunk` values of the
             promotable chunks.
 
@@ -388,9 +388,10 @@ class ReplicaChunkDatabase:
         AND (stop.e IS NULL OR p.apdb_replica_chunk < stop.e)
         ORDER BY p.apdb_replica_chunk;
         """
-        return self.execute(query)
+        rows = self.execute(query)
+        return [r[0] for r in rows]
 
-    def mark_chunks_promoted(self, promotable_chunks: list[tuple[int]]) -> int:
+    def mark_chunks_promoted(self, promotable_chunks: list[int]) -> int:
         """Set status='promoted' for the given chunk IDs. Returns number
         updated. Uses ``_db.execute(...)`` by wrapping UPDATE in a CTE that
         returns a count.
@@ -409,13 +410,9 @@ class ReplicaChunkDatabase:
             to the number of promotable chunks provided, if they were all found
             and updated successfully.
         """
-        ids = [pc[0] for pc in promotable_chunks]
-        if not ids:
-            return 0
-
         stmt = (
             update(self.table)
-            .where(self.table.c.apdb_replica_chunk.in_(ids),
+            .where(self.table.c.apdb_replica_chunk.in_(promotable_chunks),
                    self.table.c.status != "promoted")
             .values(status="promoted")
         )
