@@ -229,7 +229,9 @@ class ReplicaChunkDatabase:
         """The PpdbReplicaChunk table (`Table`, read-only)."""
         if self._table is None:
             metadata = MetaData()
-            self._table = Table("PpdbReplicaChunk", metadata, autoload_with=self.engine)
+            self._table = Table(
+                "PpdbReplicaChunk", metadata, autoload_with=self.engine, schema=self.db_schema
+            )
         return self._table
 
     @property
@@ -365,22 +367,23 @@ class ReplicaChunkDatabase:
         chunks are `staged` after the first non-`promoted` chunk, an empty list
         is returned.
         """
+        table_name = f'{self.db_schema}."{self.table.name}"'
         query = f"""
         WITH start AS (
         SELECT MIN(apdb_replica_chunk) AS s
-        FROM {self.table.name}
+        FROM {table_name}
         WHERE status <> 'promoted'
         ),
         stop AS (
         SELECT MIN(p.apdb_replica_chunk) AS e
-        FROM {self.table.name} p
+        FROM {table_name} p
         JOIN start ON TRUE
         WHERE start.s IS NOT NULL
             AND p.apdb_replica_chunk >= start.s
             AND p.status <> 'staged'
         )
         SELECT p.apdb_replica_chunk
-        FROM {self.table.name} p
+        FROM {table_name} p
         JOIN start ON TRUE
         LEFT JOIN stop ON TRUE
         WHERE start.s IS NOT NULL
