@@ -73,6 +73,8 @@ class ReplicaChunkDatabase:
         self._db_schema = db_schema
         if db_port is None:
             self._db_port = 5432
+        else:
+            self._db_port = db_port
         self._engine: Engine | None = None
         self._table: Table | None = None
         self._password_name = password_name or "ppdb-db-password"
