@@ -410,19 +410,17 @@ class ReplicaChunkDatabase:
             to the number of promotable chunks provided, if they were all found
             and updated successfully.
         """
-        ids = [int(row[0]) for row in promotable_chunks if row and row[0] is not None]
+        ids = [pc[0] for pc in promotable_chunks]
         if not ids:
             return 0
 
-        sql = f"""
-        WITH updated AS (
-        UPDATE {self.table.name}
-        SET status = 'promoted'
-        WHERE apdb_replica_chunk = ANY(:ids)
-        AND status <> 'promoted'
-        RETURNING apdb_replica_chunk
+        stmt = (
+            update(self.table)
+            .where(self.table.c.apdb_replica_chunk.in_(ids),
+                   self.table.c.status != "promoted")
+            .values(status="promoted")
         )
-        SELECT COUNT(*) FROM updated;
-        """
-        rows = self.execute(sql, {"ids": ids})
-        return int(rows[0][0]) if rows else 0
+
+        with self.engine.begin() as conn:
+            result: Result = conn.execute(stmt)
+            return result.rowcount
