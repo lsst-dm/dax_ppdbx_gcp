@@ -218,7 +218,6 @@ class ReplicaChunkDatabase:
             self._engine = create_engine(
                 self.db_url,
                 pool_pre_ping=True,
-                connect_args={"options": f"-c search_path={self.db_schema}"},
             )
         return self._engine
 
@@ -405,7 +404,7 @@ class ReplicaChunkDatabase:
 
         Returns
         -------
-        int
+        count: `int`
             The number of rows updated in the database, which should be equal
             to the number of promotable chunks provided, if they were all found
             and updated successfully.
