@@ -36,11 +36,6 @@ class StorageError(RuntimeError):
 class UploadError(RuntimeError):
     """Single-file upload failure."""
 
-    def __init__(self, source: str, gcs_name: str) -> None:
-        self.source: str = source
-        self.gcs_name: str = gcs_name
-        super().__init__(f"upload failed: {self.source} -> {self.gcs_name}")
-
 
 class DeleteError(StorageError):
     """Error raised for a failed recursive delete.
@@ -88,7 +83,7 @@ class StorageClient:
             blob = self.bucket.blob(blob_name)
             blob.upload_from_filename(file_path)
         except Exception as e:
-            raise UploadError(str(file_path), blob_name) from e
+            raise UploadError(f"upload failed: {str(file_path)} -> {blob_name}") from e
 
     def upload_files(self, gcs_names: dict[Path, str]) -> None:
         """Upload files in parallel.
@@ -123,7 +118,8 @@ class StorageClient:
                     future.result()
                 except Exception as e:
                     # Capture the exception and create an UploadError.
-                    upload_error = UploadError(str(src_path), object_name)
+                    upload_error = UploadError(f"upload failed: {str(src_path)} -> {object_name}")
+
                     upload_error.__cause__ = e  # Preserve original exception
                     failures.append(upload_error)
 
@@ -144,7 +140,7 @@ class StorageClient:
             blob = self.bucket.blob(blob_name)
             blob.upload_from_string(file_content)
         except Exception as e:
-            raise UploadError("<string>", blob_name) from e
+            raise UploadError(f"upload failed: <string> -> {blob_name}") from e
 
     def delete_recursive(self, gcs_prefix: str) -> None:
         """Recursively delete all of the objects under a GCS prefix.
