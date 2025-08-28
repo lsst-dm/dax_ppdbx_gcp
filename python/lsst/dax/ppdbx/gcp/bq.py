@@ -24,7 +24,7 @@ from __future__ import annotations
 __all__ = ["AnyBQJob", "NoPromotableChunksError", "QueryRunner", "ReplicaChunkPromoter"]
 
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from typing import TypeAlias
 
 from google.api_core.exceptions import NotFound
@@ -72,18 +72,18 @@ class QueryRunner:
 
     @property
     def dataset(self) -> bigquery.Dataset:
-        """BigQuery dataset reference (`bigquery.Dataset`, read-only)."""
+        """Dataset reference (`bigquery.Dataset`, read-only)."""
         return self._dataset
 
     @property
     def dataset_id(self) -> str:
-        """BigQuery dataset ID (`str`, read-only)."""
+        """Dataset ID (`str`, read-only)."""
         return self._dataset_id
 
     @property
     def location(self) -> str:
-        """BigQuery dataset location, typically the region where the dataset
-        is hosted (`str`, read-only).
+        """Dataset location, typically the region where it is hosted (`str`,
+        read-only).
         """
         return self._location
 
@@ -167,17 +167,20 @@ class ReplicaChunkPromoter:
 
     Parameters
     ----------
+     promotable_chunks: `list`[`int`]
+        Sequence of tuples containing the APDB replica chunk IDs to promote.
     runner : `QueryRunner`, optional
         An instance of `QueryRunner` to execute queries. If not provided, a new
         instance will be created using environment variables.
     table_names : `list`[`str`], optional
         List of table names to promote with standard default.
-    promotable_chunks: `list`[`int`]
-        Sequence of tuples containing the APDB replica chunk IDs to promote.
     """
 
     def __init__(
-        self, promotable_chunks, runner: QueryRunner | None = None, table_names: list[str] | None = None
+        self,
+        promotable_chunks: list[int],
+        runner: QueryRunner | None = None,
+        table_names: list[str] | None = None,
     ):
         self._promotable_chunks = promotable_chunks
         self._runner = runner or QueryRunner.from_env()
@@ -199,7 +202,7 @@ class ReplicaChunkPromoter:
 
     @property
     def dataset_id(self) -> str:
-        """BigQuery dataset ID (`str`, read-only)."""
+        """Dataset ID (`str`, read-only)."""
         return self._runner.dataset_id
 
     @property
@@ -222,14 +225,14 @@ class ReplicaChunkPromoter:
 
     @property
     def runner(self) -> QueryRunner:
-        """QueryRunner instance for executing BigQuery operations
-        (`QueryRunner`, read-only).
-        """
+        """Runner for executing BigQuery jobs (`QueryRunner`, read-only)."""
         return self._runner
 
     @property
     def bq_client(self) -> bigquery.Client:
-        """BigQuery client (`bigquery.Client`, read-only)."""
+        """Client for interacting with BigQuery (`bigquery.Client`,
+        read-only).
+        """
         return self._bq_client
 
     @property
@@ -347,13 +350,14 @@ class ReplicaChunkPromoter:
             try:
                 sql = f"DELETE FROM `{staging_ref}` WHERE apdb_replica_chunk IN UNNEST(@ids)"
                 self.runner.run_job("delete_staged_chunks", sql, job_config=job_config)
-                logging.debug("Deleted %d chunk(s) from staging table %s", len(self.promotable_chunks), staging_ref)
+                logging.debug(
+                    "Deleted %d chunk(s) from staging table %s", len(self.promotable_chunks), staging_ref
+                )
             except NotFound:
                 logging.warning("Staging table %s does not exist, skipping delete", staging_ref)
 
     def promote_chunks(self) -> None:
-        """Promote APDB replica chunks into production.
-        """
+        """Promote APDB replica chunks into production."""
         try:
             for phase in ("build_tmp", "promote_prod", "delete_staged_chunks"):
                 self._execute_phase(phase)

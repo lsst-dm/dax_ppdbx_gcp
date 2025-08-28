@@ -28,7 +28,7 @@ from typing import Any
 
 from google.cloud import secretmanager
 from sqlalchemy import MetaData, Table, create_engine, insert, text, update
-from sqlalchemy.engine import Engine, Result
+from sqlalchemy.engine import CursorResult, Engine, Result
 
 from .env import require_env
 
@@ -63,7 +63,7 @@ class ReplicaChunkDatabase:
         db_name: str,
         db_user: str,
         db_schema: str,
-        db_port: int = None,
+        db_port: int | None = None,
         password_name: str | None = None,
     ):
         self._project_id = project_id
@@ -199,7 +199,10 @@ class ReplicaChunkDatabase:
         """Full database URL for SQLAlchemy, including the password (`str`,
         read-only).
         """
-        return f"postgresql+psycopg2://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+        return (
+            f"postgresql+psycopg2://{self.db_user}:{self.db_password}@"
+            f"{self.db_host}:{self.db_port}/{self.db_name}"
+        )
 
     @property
     def db_url_safe(self) -> str:
@@ -210,9 +213,7 @@ class ReplicaChunkDatabase:
 
     @property
     def engine(self) -> Engine:
-        """SQLAlchemy engine for the database connection (`Engine`,
-        read-only).
-        """
+        """Engine for connecting to the database (`Engine`, read-only)."""
         if self._engine is None:
             logging.info("Connecting to database at: %s (schema: %s)", self.db_url_safe, self.db_schema)
             self._engine = create_engine(
@@ -223,9 +224,7 @@ class ReplicaChunkDatabase:
 
     @property
     def table(self) -> Table:
-        """SQLAlchemy `~sqlalchemy.Table` object for the PpdbReplicaChunk
-        table.
-        """
+        """The PpdbReplicaChunk table (`Table`, read-only)."""
         if self._table is None:
             metadata = MetaData()
             self._table = Table("PpdbReplicaChunk", metadata, autoload_with=self.engine)
@@ -412,11 +411,10 @@ class ReplicaChunkDatabase:
         """
         stmt = (
             update(self.table)
-            .where(self.table.c.apdb_replica_chunk.in_(promotable_chunks),
-                   self.table.c.status != "promoted")
+            .where(self.table.c.apdb_replica_chunk.in_(promotable_chunks), self.table.c.status != "promoted")
             .values(status="promoted")
         )
 
         with self.engine.begin() as conn:
-            result: Result = conn.execute(stmt)
-            return result.rowcount
+            result: CursorResult = conn.execute(stmt)
+            return result.rowcount or 0
