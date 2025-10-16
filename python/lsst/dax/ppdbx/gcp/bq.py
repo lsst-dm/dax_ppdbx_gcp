@@ -21,7 +21,13 @@
 
 from __future__ import annotations
 
-__all__ = ["AnyBQJob", "NoPromotableChunksError", "QueryRunner", "ReplicaChunkPromoter"]
+__all__ = [
+    "AnyBQJob",
+    "NoPromotableChunksError",
+    "QueryRunner",
+    "ReplicaChunkPromoter",
+    "check_dataset_exists",
+]
 
 import logging
 from collections.abc import Callable
@@ -31,6 +37,28 @@ from google.api_core.exceptions import NotFound
 from google.cloud import bigquery
 
 from .env import require_env
+
+
+def check_dataset_exists(project_id: str, dataset_id: str) -> None:
+    """Check if a BigQuery dataset exists.
+
+    Parameters
+    ----------
+    project_id : `str`
+        Google Cloud project ID.
+    dataset_id : `str`
+        Fully qualified BigQuery dataset ID including project name.
+
+    Raises
+    ------
+    LookupError
+        Raised if the specified dataset does not exist.
+    """
+    bq_client = bigquery.Client(project=project_id)
+    try:
+        bq_client.get_dataset(f"{project_id}.{dataset_id}")
+    except NotFound as e:
+        raise LookupError(f"Dataset {dataset_id} not found in project {project_id}") from e
 
 
 class QueryRunner:

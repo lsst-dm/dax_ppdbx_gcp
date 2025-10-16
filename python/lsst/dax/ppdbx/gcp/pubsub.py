@@ -49,12 +49,17 @@ class Publisher:
         self.topic_path = self.publisher.topic_path(project_id, topic_name)
 
     def validate_topic_exists(self) -> None:
-        """Validate that the Pub/Sub topic exists."""
+        """Validate that the Pub/Sub topic exists.
+
+        Raises
+        ------
+        LookupError
+            Raised if the Pub/Sub topic does not exist.
+        """
         try:
             self.publisher.get_topic(request={"topic": self.topic_path})
-        except NotFound:
-            logging.exception("Pub/Sub topic does not exist: %s", self.topic_path)
-            raise
+        except NotFound as e:
+            raise LookupError(f"Pub/Sub topic not found: {self.topic_path}") from e
 
     def publish(self, message: dict) -> Future:
         """Publish a message to the Pub/Sub topic specified during
