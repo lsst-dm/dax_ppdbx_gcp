@@ -6,3 +6,4 @@ google-cloud-secret-manager
 google-cloud-storage
 psycopg2-binary
 sqlalchemy
+lsst-utils @ git+https://github.com/lsst/utils@main
