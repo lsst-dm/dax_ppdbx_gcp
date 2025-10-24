@@ -26,7 +26,7 @@ import unittest
 
 try:
     import google.auth
-    import google.cloud
+    import google.cloud  # noqa: F401
 
     GCP_MISSING = False
 except ImportError:
