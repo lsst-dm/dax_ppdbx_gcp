@@ -2,3 +2,8 @@ build/
 python/lsst/dax/ppdbx/gcp/version.py
 *.egg-info/
 __pycache__
+.coverage
+.sconsign.dblite
+config.log
+python/lsst_dax_ppdbx_gcp.dist-info/
+tests/.tests/
