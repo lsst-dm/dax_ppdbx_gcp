@@ -24,6 +24,14 @@ import pkgutil
 import sys
 import unittest
 
+try:
+    import google.auth
+    import google.cloud
+
+    GCP_MISSING = False
+except ImportError:
+    GCP_MISSING = True
+
 
 def _test_package_imports(package_name: str) -> None:
     """Test importing all submodules under the given package.
@@ -64,6 +72,7 @@ def _test_package_imports(package_name: str) -> None:
         print(f"All modules under '{package_name}' imported successfully.")
 
 
+@unittest.skipIf(GCP_MISSING, "GCP libraries are not available; skipping module import tests.")
 class TestPackageImports(unittest.TestCase):
     """Unit test case to check imports of all modules in the 'lsst.ppdb.gcp'
     package.
