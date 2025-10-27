@@ -21,11 +21,12 @@
 
 from __future__ import annotations
 
-__all__ = ["DeleteError", "StorageClient", "UploadError"]
+__all__ = ["DeleteError", "StorageClient", "UploadError", "check_bucket_exists"]
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from google.api_core.exceptions import NotFound
 from google.cloud.storage import Client
 
 
@@ -49,6 +50,25 @@ class DeleteError(StorageError):
     def __init__(self, prefix: str) -> None:
         self.prefix: str = prefix
         super().__init__(f"delete failed under prefix: {self.prefix}")
+
+
+def check_bucket_exists(bucket_name: str) -> None:
+    """Check if a Google Cloud Storage bucket exists.
+
+    Parameters
+    ----------
+    bucket_name : `str`
+        Name of the bucket to check.
+
+    Raises
+    ------
+    google.cloud.exceptions.NotFound
+        If the bucket does not exist.
+    """
+    try:
+        Client().get_bucket(bucket_name)
+    except NotFound as e:
+        raise LookupError(f"Bucket {bucket_name} not found") from e
 
 
 class StorageClient:
