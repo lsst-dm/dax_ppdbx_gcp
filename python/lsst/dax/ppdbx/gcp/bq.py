@@ -330,13 +330,24 @@ class ReplicaChunkPromoter:
             # Clone prod table structure and data (zero-copy)
             self.runner.run_job("clone_prod", f"CREATE TABLE `{tmp_ref}` CLONE `{prod_ref}`")
 
+            # Build ordered target list from the cloned tmp schema
+            tmp_schema = self.bq_client.get_table(tmp_ref).schema
+            target_names = [f.name for f in tmp_schema if f.name != "apdb_replica_chunk"]
+            target_list_sql = ", ".join(f"`{n}`" for n in target_names)
+
+            # Build source list, handling geo_point conversion
+            source_list_sql = ", ".join(
+                "ST_GEOGPOINT(s.`ra`, s.`dec`)" if n == "geo_point" else f"s.`{n}`" for n in target_names
+            )
+
             # Insert staged rows into tmp, excluding apdb_replica_chunk column
             sql = f"""
-            INSERT INTO `{tmp_ref}`
-            SELECT * EXCEPT(apdb_replica_chunk)
-            FROM `{stage_ref}`
-            WHERE apdb_replica_chunk IN UNNEST(@ids)
+            INSERT INTO `{tmp_ref}` ({target_list_sql})
+            SELECT {source_list_sql}
+            FROM `{stage_ref}` AS s
+            WHERE s.apdb_replica_chunk IN UNNEST(@ids)
             """
+            logging.debug("SQL for inserting staged rows into %s: %s", tmp_ref, sql)
             self.runner.run_job("insert_staged_to_tmp", sql, job_config=job_cfg)
 
     def _promote_tmp_to_prod(self) -> None:
