@@ -373,6 +373,7 @@ class ReplicaChunkDatabase:
         SELECT MIN(apdb_replica_chunk) AS s
         FROM {table_name}
         WHERE status <> 'promoted'
+            AND status <> 'skipped'
         ),
         stop AS (
         SELECT MIN(p.apdb_replica_chunk) AS e
@@ -381,6 +382,7 @@ class ReplicaChunkDatabase:
         WHERE start.s IS NOT NULL
             AND p.apdb_replica_chunk >= start.s
             AND p.status <> 'staged'
+            AND status <> 'skipped'
         )
         SELECT p.apdb_replica_chunk
         FROM {table_name} p
