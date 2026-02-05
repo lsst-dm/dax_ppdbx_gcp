@@ -23,7 +23,6 @@ from __future__ import annotations
 
 __all__ = ["get_auth_default"]
 
-import os
 
 import google.auth
 from google.auth.credentials import Credentials
@@ -45,13 +44,6 @@ def get_auth_default() -> tuple[Credentials, str]:
     project_id : `str`
         Project ID.
     """
-    # Check for required environment variable
-    if "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
-        raise RuntimeError("Environment variable GOOGLE_APPLICATION_CREDENTIALS is not set.")
-    credentials_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-    if not credentials_path or not os.path.exists(credentials_path):
-        raise RuntimeError("Invalid GOOGLE_APPLICATION_CREDENTIALS path.")
-
     # Setup Google authentication
     try:
         credentials, project_id = google.auth.default()
