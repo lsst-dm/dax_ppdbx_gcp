@@ -263,3 +263,36 @@ class StorageClient:
             return blob.download_as_text()
         except Exception as e:
             raise StorageError(f"read failed: {blob_name}") from e
+
+    def list_files(self, pattern: str) -> list[str]:
+        """
+        List blob names in the bucket matching a glob pattern.
+
+        Parameters
+        ----------
+        pattern : `str`
+            A Cloud Storage glob pattern (JSON API `matchGlob` syntax), e.g.
+            ``"*.json"``, ``"data/*.parquet"``, ``"**/*.parquet"``.
+
+        Returns
+        -------
+        list of `str`
+            Blob names that match the glob pattern.
+
+        Raises
+        ------
+        StorageError
+            If the installed `google-cloud-storage` library does not support
+            `match_glob`, or if the list operation fails.
+
+        Notes
+        -----
+        This uses Cloud Storage's server-side glob filtering (`matchGlob`),
+        which avoids listing every object client-side.
+        """
+        try:
+            # Server-side filtering (JSON API matchGlob).
+            blobs = self.bucket.list_blobs(match_glob=pattern)
+            return [b.name for b in blobs]
+        except Exception as e:
+            raise StorageError(f"list_blobs failed for glob pattern: {pattern}") from e
