@@ -87,7 +87,68 @@ class StorageClient:
 
     def __init__(self, bucket_name: str):
         self.client = Client()
+        self.bucket_name = bucket_name
         self.bucket = self.client.bucket(bucket_name)
+
+    def create_bucket(self, location: str = "US") -> None:
+        """Create the bucket if it doesn't already exist.
+
+        Parameters
+        ----------
+        location : `str`, optional
+            The location for the bucket (e.g., "US", "us-central1").
+            Defaults to "US" for multi-region.
+
+        Raises
+        ------
+        google.cloud.exceptions.Conflict
+            If the bucket already exists.
+        google.cloud.exceptions.BadRequest
+            If the bucket name is invalid.
+        """
+        try:
+            self.bucket = self.client.create_bucket(self.bucket_name, location=location)
+        except Exception as e:
+            raise StorageError(f"Failed to create bucket {self.bucket_name}") from e
+
+    def delete_bucket(self, force: bool = False) -> None:
+        """Delete the bucket.
+
+        Parameters
+        ----------
+        force : `bool`, optional
+            If True, delete all objects in the bucket before deleting the
+            bucket.
+            Defaults to False.
+
+        Raises
+        ------
+        google.cloud.exceptions.Conflict
+            If the bucket is not empty and force is False.
+        """
+        try:
+            if force:
+                # Delete all objects in the bucket first
+                blobs = self.bucket.list_blobs()
+                for blob in blobs:
+                    blob.delete()
+            self.bucket.delete()
+        except Exception as e:
+            raise StorageError(f"Failed to delete bucket {self.bucket_name}") from e
+
+    def check_bucket_exists(self) -> bool:
+        """Check if the bucket exists.
+
+        Returns
+        -------
+        bool
+            True if the bucket exists, False otherwise.
+        """
+        try:
+            self.client.get_bucket(self.bucket_name)
+            return True
+        except NotFound:
+            return False
 
     def upload_file(self, blob_name: str, file_path: Path) -> None:
         """Upload a file to the specified blob name in the bucket.
