@@ -237,3 +237,29 @@ class StorageClient:
                 blob.delete()
         except Exception as e:
             raise DeleteError(gcs_prefix) from e
+
+    def read_as_string(self, blob_name: str) -> str:
+        """Read a blob and return its content as a string.
+
+        Parameters
+        ----------
+        blob_name : `str`
+            The name of the blob in the bucket.
+
+        Returns
+        -------
+        str
+            The content of the blob as a string.
+
+        Raises
+        ------
+        google.cloud.exceptions.NotFound
+            If the blob does not exist.
+        StorageError
+            If the read operation fails.
+        """
+        try:
+            blob = self.bucket.blob(blob_name)
+            return blob.download_as_text()
+        except Exception as e:
+            raise StorageError(f"read failed: {blob_name}") from e
