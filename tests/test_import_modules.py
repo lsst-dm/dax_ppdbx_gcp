@@ -22,8 +22,8 @@
 import unittest
 
 try:
-    import google.auth
-    import google.cloud  # noqa: F401
+    import google.auth  # noqa: F401
+    from google.cloud import bigquery, logging, pubsub_v1, secretmanager, storage  # noqa: F401
 
     GCP_MISSING = False
 except ImportError:
